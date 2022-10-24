@@ -32,7 +32,6 @@ class Router
                 }
             });
     
-            // https://github.com/gmaccario/simple-mvc-php-framework/issues/2
             // Issue #2: Fix Non-static method ... should not be called statically
             $className = '\\App\\Controllers\\' . $matcher['controller'];
             $classInstance = new $className();

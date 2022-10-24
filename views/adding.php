@@ -1,37 +1,152 @@
+<?php
+ 
+// Define variables and initialize with empty values
+$title = $description = $price = $sku = $image = "";
+$title_err = $description_err = $price_err = $sku_err = $image_err = "";
+ 
+// Processing form data when form is submitted
+if($_SERVER["REQUEST_METHOD"] == "POST"){
+    // Validate title
+    $input_title = trim($_POST["title"]);
+    if(empty($input_title)){
+        $title_err = "Please enter a name.";
+    } elseif(!filter_var($input_title, FILTER_VALIDATE_REGEXP, array("options"=>array("regexp"=>"/^[a-zA-Z\s]+$/")))){
+        $title_err = "Please enter a valid name.";
+    } else{
+        $title = $input_title;
+    }
+
+    // Validate description
+    $input_description = trim($_POST["description"]);
+    if(empty($input_description)){
+        $description_err = "Please enter a description.";
+    } else {
+        $description = $input_description;
+    }
+
+    // Validate price
+    $input_price = trim($_POST["price"]);
+    if(empty($input_price)){
+        $price_err = "Pleae enter a price.";
+    } elseif(!ctype_digit($input_price)){
+        $price_err = "Please enter a positive number.";
+    } else {
+        $price = $input_price;
+    }
+
+    // Validate sku
+    $input_sku = trim($_POST["sku"]);
+    if(empty($input_sku)){
+        $sku_err = "Please enter a sku.";
+    } elseif(!ctype_digit($input_sku)){
+        $sku_err = "Please enter a positive number.";
+    } else {
+        $sku = $input_sku;
+    }
+
+    // Validate image
+    $input_image = trim($_POST["image"]);
+    if(empty($input_image)){
+        $image_err = "Please enter a address of image.";
+    } else {
+        $image = $input_image;
+    }
+
+    // Connect to DB
+    $conn = mysqli_connect(DB_HOST, DB_USER, DB_PASS, DB_NAME);
+            
+        if($conn === false) {
+            die("ERROR: Could not connect: " . mysqli_connect_error());
+        }
+
+    // Check errors before inserting in database
+    if(empty($title_err) && empty($description_err) && empty($price_err) && empty($sku_err) && empty($image_err)){
+        // Prepare an insert statement
+        $sql = "INSERT INTO products (title, description, price, sku, image) VALUES (?, ?, ?, ?, ?)";
+
+        if($stmt = mysqli_prepare($conn, $sql)){
+            // Bind variables to prepared statement as parametrs
+            mysqli_stmt_bind_param($stmt, "ssdds", $param_title, $param_description, $param_price, $param_sku, $param_image);
+
+            // Set params
+            $param_title = $title;
+            $param_description = $description;
+            $param_price = $price;
+            $param_sku = $sku;
+            $param_image = $image;
+
+            // Attempt to execute the prepared statement
+            if(mysqli_stmt_execute($stmt)){
+                // Records created successfully. Redirect to landing page.
+                header("location: adding");
+                exit();
+            } else {
+                echo "Something went wrong. Please try again later.";
+            }
+        }
+
+        // Close statement
+        mysqli_stmt_close($stmt);
+    }
+
+    // Close connection
+    mysqli_close($conn);
+}
+?>
+
 <!DOCTYPE html>
-<html>
-
+<html lang="eng">
 <head>
-    <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="description" content="">
-    <meta name="author" content="">
-    <link rel="shortcut icon" href="favicon.png">
-    <title>Simple PHP MVC</title>
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <meta charset="UTF-8">
+    <title>Create Record</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.css">
+    <style type="text/css">
+        .wrapper{
+            width: 500px;
+            margin: 0 auto;
+        }
+    </style>
 </head>
-
 <body>
-
-    <section>
-        <h1>Creat your product:</h1>
-        <form action="/AddingController.php">
-        <label for="fname">First name:</label><br>
-        <input type="text" id="fname" name="fname" value="John"><br>
-        <label for="lname">Last name:</label><br>
-        <input type="text" id="lname" name="lname" value="Doe"><br><br>
-        <input type="submit" value="Submit">
-        </form> 
-        <a href="<?php echo $routes->get('homepage')->getPath(); ?>">Back to homepage</a>
-        <p>If you click the "Submit" button, the form-data will be sent to a page called "/action_page.php".</p>
-        
-    <section>
-
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js" 
-        integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" 
-        crossorigin="anonymous"></script>
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <div class="wrapper">
+        <div class="container-fluid">
+            <div class="row>
+                <div class="col-md-12">
+                    <div class="page-header">
+                        <h2>Create Record</h2>
+                    </div>
+                    <p>Please fill this form and submit to add product record to the database.</p>
+                    <form action="" method="POST">
+                        <div class="form-group <?php echo (!empty($title_err)) ? 'has-error' : '';?>">
+                            <label>Title</label>
+                            <input type="text" name="title" class="form-control" value="<?php echo "$title";?>">
+                            <span class="help-block"><?php echo $title_err;?></span>
+                        </div>
+                        <div class="form-group <?php echo (!empty($description_err)) ? 'has-error' : '';?>">
+                            <label>Description</label>
+                            <textarea name="description" class="form-control" value="<?php echo $description;?>"></textarea>
+                            <span class="help-block><?php echo $description_err;?></span>
+                        </div>
+                        <div class="form-group <?php echo (!empty($price_err)) ? 'has-error' : '';?>">
+                            <label>Price</label>
+                            <input type="text" name="price" class="form-control" value="<?php echo "$price";?>">
+                            <span class="help-block"><?php echo $price_err;?></span>
+                        </div>
+                        <div class="form-group <?php echo (!empty($sku_err)) ? 'has-error' : '';?>">
+                            <label>Sku</label>
+                            <input type="text" name="sku" class="form-control" value="<?php echo "$sku";?>">
+                            <span class="help-block"><?php echo $sku_err;?></span>
+                        </div>
+                        <div class="form-group <?php echo (!empty($image_err)) ? 'has-error' : '';?>">
+                            <label>Image</label>
+                            <input type="text" name="image" class="form-control" value="<?php echo "$image";?>">
+                            <span class="help-block"><?php echo $image_err;?></span>
+                        </div>
+                        <input type="submit" class="btn btn-primary" value="Submit">
+                        <a href="<?php echo $routes->get('homepage')->getPath(); ?>" class="btn btn-default">Cancel</a>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
 </body>
-
-</html>

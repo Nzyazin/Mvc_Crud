@@ -23,7 +23,12 @@
             <a href="<?php echo $routes->get('adding')->getPath() ?>">Create the product</a>
         </p>
         <p>
-            <?php
+            <?php            
+            $conn = mysqli_connect(DB_HOST, DB_USER, DB_PASS, DB_NAME);
+            
+            if($conn === false) {
+                die("ERROR: Could not connect: " . mysqli_connect_error());
+            }
             $sql = "SELECT * FROM products";
             if($result = mysqli_query($conn, $sql)) {
                 if(mysqli_num_rows($result) > 0) {
